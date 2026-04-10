@@ -7,9 +7,9 @@ import (
 )
 
 type taskMutationDTO struct {
-	Title       string            `json:"title"`
-	Description string            `json:"description"`
-	Status      taskdomain.Status `json:"status"`
+	Title       string               `json:"title"`
+	Description string               `json:"description"`
+	Status      taskdomain.Status    `json:"status"`
 }
 
 type taskDTO struct {
@@ -22,7 +22,7 @@ type taskDTO struct {
 }
 
 func newTaskDTO(task *taskdomain.Task) taskDTO {
-	return taskDTO{
+    return taskDTO{
 		ID:          task.ID,
 		Title:       task.Title,
 		Description: task.Description,

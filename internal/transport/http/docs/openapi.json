@@ -131,6 +131,155 @@
           "404": { "$ref": "#/components/responses/NotFound" }
         }
       }
+    },
+    "/api/v1/tasks/{task_id}/schedule": {
+      "get": {
+        "tags": ["Schedules"],
+        "summary": "List schedules",
+        "parameters": [
+          {
+            "name": "task_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer", "format": "int64", "minimum": 1 }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Schedule list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/Schedule" }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Schedules"],
+        "summary": "Create schedule",
+        "parameters": [
+          {
+            "name": "task_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer", "format": "int64", "minimum": 1 }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/CreateScheduleRequest" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created schedule",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Schedule" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" }
+        }
+      }
+    },
+    "/api/v1/tasks/{task_id}/schedule/{schedule_id}": {
+      "get": {
+        "tags": ["Schedules"],
+        "summary": "Get schedule by ID",
+        "parameters": [
+          {
+            "name": "task_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer", "format": "int64", "minimum": 1 }
+          },
+          {
+            "name": "schedule_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer", "format": "int64", "minimum": 1 }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Schedule",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Schedule" }
+              }
+            }
+          },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      },
+      "put": {
+        "tags": ["Schedules"],
+        "summary": "Update schedule",
+        "parameters": [
+          {
+            "name": "task_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer", "format": "int64", "minimum": 1 }
+          },
+          {
+            "name": "schedule_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer", "format": "int64", "minimum": 1 }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/UpdateScheduleRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Updated schedule",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Schedule" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      },
+      "delete": {
+        "tags": ["Schedules"],
+        "summary": "Delete schedule",
+        "parameters": [
+          {
+            "name": "task_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer", "format": "int64", "minimum": 1 }
+          },
+          {
+            "name": "schedule_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer", "format": "int64", "minimum": 1 }
+          }
+        ],
+        "responses": {
+          "204": { "description": "Deleted" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
     }
   },
   "components": {
@@ -217,10 +366,92 @@
           }
         }
       },
+      "Schedule": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer", "format": "int64", "example": 1 },
+          "task_id": { "type": "integer", "format": "int64", "example": 1 },
+          "rule_type": {
+            "type": "string",
+            "enum": ["daily", "monthly", "specific", "parity"],
+            "example": "daily"
+          },
+          "start_from": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-03-24T00:00:00Z"
+          },
+          "interval": { "type": "integer", "format": "int32", "example": 1 },
+          "month_day": { "type": "integer", "format": "int32", "example": 1 },
+          "is_even": { "type": "boolean", "example": false },
+          "specific_dates": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "example": ["2026-03-25T10:00:00Z", "2026-03-27T10:00:00Z"]
+          }
+        }
+      },
+      "CreateScheduleRequest": {
+        "type": "object",
+        "required": ["rule_type", "start_from"],
+        "properties": {
+          "rule_type": {
+            "type": "string",
+            "enum": ["daily", "monthly", "specific", "parity"],
+            "example": "daily"
+          },
+          "start_from": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-03-24T00:00:00Z"
+          },
+          "interval": { "type": "integer", "format": "int32", "example": 1 },
+          "month_day": { "type": "integer", "format": "int32", "example": 1 },
+          "is_even": { "type": "boolean", "example": false },
+          "specific_dates": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "example": ["2026-03-25T10:00:00Z", "2026-03-27T10:00:00Z"]
+          }
+        }
+      },
+      "UpdateScheduleRequest": {
+        "type": "object",
+        "required": ["rule_type", "start_from"],
+        "properties": {
+          "rule_type": {
+            "type": "string",
+            "enum": ["daily", "monthly", "specific", "parity"],
+            "example": "daily"
+          },
+          "start_from": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-03-24T00:00:00Z"
+          },
+          "interval": { "type": "integer", "format": "int32", "example": 1 },
+          "month_day": { "type": "integer", "format": "int32", "example": 1 },
+          "is_even": { "type": "boolean", "example": false },
+          "specific_dates": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "example": ["2026-03-25T10:00:00Z", "2026-03-27T10:00:00Z"]
+          }
+        }
+      },
       "Error": {
         "type": "object",
         "properties": {
-          "error": { "type": "string", "example": "task not found" }
+          "error": { "type": "string", "example": "not found" }
         }
       }
     }

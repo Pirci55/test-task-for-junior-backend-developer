@@ -21,8 +21,9 @@ func NewService(repo Repository) *Service {
 	}
 }
 
-func (s *Service) Create(ctx context.Context, input CreateInput) (*taskdomain.Task, error) {
-	normalized, err := validateCreateInput(input)
+
+func (s *Service) CreateTask(ctx context.Context, input CreateTaskInput) (*taskdomain.Task, error) {
+	normalized, err := validateCreateTaskInput(input)
 	if err != nil {
 		return nil, err
 	}
@@ -36,7 +37,7 @@ func (s *Service) Create(ctx context.Context, input CreateInput) (*taskdomain.Ta
 	model.CreatedAt = now
 	model.UpdatedAt = now
 
-	created, err := s.repo.Create(ctx, model)
+	created, err := s.repo.CreateTask(ctx, nil, model)
 	if err != nil {
 		return nil, err
 	}
@@ -44,20 +45,20 @@ func (s *Service) Create(ctx context.Context, input CreateInput) (*taskdomain.Ta
 	return created, nil
 }
 
-func (s *Service) GetByID(ctx context.Context, id int64) (*taskdomain.Task, error) {
+func (s *Service) GetTaskByID(ctx context.Context, id int64) (*taskdomain.Task, error) {
 	if id <= 0 {
-		return nil, fmt.Errorf("%w: id must be positive", ErrInvalidInput)
+		return nil, fmt.Errorf("%w: task id must be positive", ErrInvalidInput)
 	}
 
-	return s.repo.GetByID(ctx, id)
+	return s.repo.GetTaskByID(ctx, nil, id)
 }
 
-func (s *Service) Update(ctx context.Context, id int64, input UpdateInput) (*taskdomain.Task, error) {
+func (s *Service) UpdateTask(ctx context.Context, id int64, input UpdateTaskInput) (*taskdomain.Task, error) {
 	if id <= 0 {
-		return nil, fmt.Errorf("%w: id must be positive", ErrInvalidInput)
+		return nil, fmt.Errorf("%w: task id must be positive", ErrInvalidInput)
 	}
 
-	normalized, err := validateUpdateInput(input)
+	normalized, err := validateUpdateTaskInput(input)
 	if err != nil {
 		return nil, err
 	}
@@ -70,7 +71,7 @@ func (s *Service) Update(ctx context.Context, id int64, input UpdateInput) (*tas
 		UpdatedAt:   s.now(),
 	}
 
-	updated, err := s.repo.Update(ctx, model)
+	updated, err := s.repo.UpdateTask(ctx, nil, model)
 	if err != nil {
 		return nil, err
 	}
@@ -78,24 +79,25 @@ func (s *Service) Update(ctx context.Context, id int64, input UpdateInput) (*tas
 	return updated, nil
 }
 
-func (s *Service) Delete(ctx context.Context, id int64) error {
+func (s *Service) DeleteTask(ctx context.Context, id int64) error {
 	if id <= 0 {
-		return fmt.Errorf("%w: id must be positive", ErrInvalidInput)
+		return fmt.Errorf("%w: task id must be positive", ErrInvalidInput)
 	}
 
-	return s.repo.Delete(ctx, id)
+	return s.repo.DeleteTask(ctx, nil, id)
 }
 
-func (s *Service) List(ctx context.Context) ([]taskdomain.Task, error) {
-	return s.repo.List(ctx)
+func (s *Service) TaskList(ctx context.Context) ([]taskdomain.Task, error) {
+	return s.repo.TaskList(ctx, nil)
 }
 
-func validateCreateInput(input CreateInput) (CreateInput, error) {
+
+func validateCreateTaskInput(input CreateTaskInput) (CreateTaskInput, error) {
 	input.Title = strings.TrimSpace(input.Title)
 	input.Description = strings.TrimSpace(input.Description)
 
 	if input.Title == "" {
-		return CreateInput{}, fmt.Errorf("%w: title is required", ErrInvalidInput)
+		return CreateTaskInput{}, fmt.Errorf("%w: title is required", ErrInvalidInput)
 	}
 
 	if input.Status == "" {
@@ -103,22 +105,22 @@ func validateCreateInput(input CreateInput) (CreateInput, error) {
 	}
 
 	if !input.Status.Valid() {
-		return CreateInput{}, fmt.Errorf("%w: invalid status", ErrInvalidInput)
+		return CreateTaskInput{}, fmt.Errorf("%w: invalid status", ErrInvalidInput)
 	}
 
 	return input, nil
 }
 
-func validateUpdateInput(input UpdateInput) (UpdateInput, error) {
+func validateUpdateTaskInput(input UpdateTaskInput) (UpdateTaskInput, error) {
 	input.Title = strings.TrimSpace(input.Title)
 	input.Description = strings.TrimSpace(input.Description)
 
 	if input.Title == "" {
-		return UpdateInput{}, fmt.Errorf("%w: title is required", ErrInvalidInput)
+		return UpdateTaskInput{}, fmt.Errorf("%w: title is required", ErrInvalidInput)
 	}
 
 	if !input.Status.Valid() {
-		return UpdateInput{}, fmt.Errorf("%w: invalid status", ErrInvalidInput)
+		return UpdateTaskInput{}, fmt.Errorf("%w: invalid status", ErrInvalidInput)
 	}
 
 	return input, nil

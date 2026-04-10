@@ -5,27 +5,20 @@ import (
 	"errors"
 
 	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgxpool"
 
 	taskdomain "example.com/taskservice/internal/domain/task"
 )
 
-type Repository struct {
-	pool *pgxpool.Pool
-}
-
-func New(pool *pgxpool.Pool) *Repository {
-	return &Repository{pool: pool}
-}
-
-func (r *Repository) Create(ctx context.Context, task *taskdomain.Task) (*taskdomain.Task, error) {
+func (r *Repository) CreateTask(ctx context.Context, tx any, task *taskdomain.Task) (*taskdomain.Task, error) {
 	const query = `
 		INSERT INTO tasks (title, description, status, created_at, updated_at)
 		VALUES ($1, $2, $3, $4, $5)
 		RETURNING id, title, description, status, created_at, updated_at
 	`
 
-	row := r.pool.QueryRow(ctx, query, task.Title, task.Description, task.Status, task.CreatedAt, task.UpdatedAt)
+	executor := r.getDB(tx)
+
+	row := executor.QueryRow(ctx, query, task.Title, task.Description, task.Status, task.CreatedAt, task.UpdatedAt)
 	created, err := scanTask(row)
 	if err != nil {
 		return nil, err
@@ -34,14 +27,16 @@ func (r *Repository) Create(ctx context.Context, task *taskdomain.Task) (*taskdo
 	return created, nil
 }
 
-func (r *Repository) GetByID(ctx context.Context, id int64) (*taskdomain.Task, error) {
+func (r *Repository) GetTaskByID(ctx context.Context, tx any, id int64) (*taskdomain.Task, error) {
 	const query = `
 		SELECT id, title, description, status, created_at, updated_at
 		FROM tasks
 		WHERE id = $1
 	`
 
-	row := r.pool.QueryRow(ctx, query, id)
+	executor := r.getDB(tx)
+
+	row := executor.QueryRow(ctx, query, id)
 	found, err := scanTask(row)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -54,7 +49,7 @@ func (r *Repository) GetByID(ctx context.Context, id int64) (*taskdomain.Task, e
 	return found, nil
 }
 
-func (r *Repository) Update(ctx context.Context, task *taskdomain.Task) (*taskdomain.Task, error) {
+func (r *Repository) UpdateTask(ctx context.Context, tx any, task *taskdomain.Task) (*taskdomain.Task, error) {
 	const query = `
 		UPDATE tasks
 		SET title = $1,
@@ -65,7 +60,9 @@ func (r *Repository) Update(ctx context.Context, task *taskdomain.Task) (*taskdo
 		RETURNING id, title, description, status, created_at, updated_at
 	`
 
-	row := r.pool.QueryRow(ctx, query, task.Title, task.Description, task.Status, task.UpdatedAt, task.ID)
+	executor := r.getDB(tx)
+
+	row := executor.QueryRow(ctx, query, task.Title, task.Description, task.Status, task.UpdatedAt, task.ID)
 	updated, err := scanTask(row)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -78,10 +75,12 @@ func (r *Repository) Update(ctx context.Context, task *taskdomain.Task) (*taskdo
 	return updated, nil
 }
 
-func (r *Repository) Delete(ctx context.Context, id int64) error {
+func (r *Repository) DeleteTask(ctx context.Context, tx any, id int64) error {
 	const query = `DELETE FROM tasks WHERE id = $1`
 
-	result, err := r.pool.Exec(ctx, query, id)
+	executor := r.getDB(tx)
+
+	result, err := executor.Exec(ctx, query, id)
 	if err != nil {
 		return err
 	}
@@ -93,14 +92,16 @@ func (r *Repository) Delete(ctx context.Context, id int64) error {
 	return nil
 }
 
-func (r *Repository) List(ctx context.Context) ([]taskdomain.Task, error) {
+func (r *Repository) TaskList(ctx context.Context, tx any) ([]taskdomain.Task, error) {
 	const query = `
 		SELECT id, title, description, status, created_at, updated_at
 		FROM tasks
 		ORDER BY id DESC
 	`
 
-	rows, err := r.pool.Query(ctx, query)
+	executor := r.getDB(tx)
+
+	rows, err := executor.Query(ctx, query)
 	if err != nil {
 		return nil, err
 	}
