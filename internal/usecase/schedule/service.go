@@ -129,9 +129,15 @@ func validateCreateScheduleInput(input CreateScheduleInput) (CreateScheduleInput
 	if input.RuleType == "" {
 		return CreateScheduleInput{}, fmt.Errorf("%w: rule type is required", ErrInvalidInput)
 	}
-
 	if !input.RuleType.Valid() {
 		return CreateScheduleInput{}, fmt.Errorf("%w: invalid rule type", ErrInvalidInput)
+	}
+
+	if input.Interval < 0 {
+		return CreateScheduleInput{}, fmt.Errorf("%w: invalid interval", ErrInvalidInput)
+	}
+	if input.MonthDay < 0 || input.MonthDay > 30 {
+		return CreateScheduleInput{}, fmt.Errorf("%w: invalid month day", ErrInvalidInput)
 	}
 
 	return input, nil
@@ -148,9 +154,15 @@ func validateUpdateScheduleInput(input UpdateScheduleInput) (UpdateScheduleInput
 	if input.RuleType == "" {
 		return UpdateScheduleInput{}, fmt.Errorf("%w: rule type is required", ErrInvalidInput)
 	}
-
 	if !input.RuleType.Valid() {
 		return UpdateScheduleInput{}, fmt.Errorf("%w: invalid rule type", ErrInvalidInput)
+	}
+
+	if input.Interval < 0 {
+		return UpdateScheduleInput{}, fmt.Errorf("%w: invalid interval", ErrInvalidInput)
+	}
+	if input.MonthDay < 0 || input.MonthDay > 30 {
+		return UpdateScheduleInput{}, fmt.Errorf("%w: invalid month day", ErrInvalidInput)
 	}
 
 	return input, nil
